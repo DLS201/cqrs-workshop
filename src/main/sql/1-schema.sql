@@ -22,3 +22,10 @@ CREATE TABLE order_line
     quantity  int NOT NULL default 1
 );
 ALTER SEQUENCE order_line_id_seq RESTART WITH 1001;
+
+CREATE TABLE product_margin
+(
+    product_reference INTEGER PRIMARY KEY,
+    product_name      text,
+    total_margin      FLOAT
+);
