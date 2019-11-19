@@ -32,9 +32,15 @@ public class FrontServiceImpl implements FrontService {
         for (OrderLine line : order.getLines())
         {
             Product product = productDAO.getByReference(line.getProductReference());
-            float margin = (product.getPrice() - product.getSupplyPrice()) * line.getQuantity();
+            Long reference = product.getReference();
+            String name = product.getName();
 
-            productMarginDAO.incrementProductMargin(product.getReference(), product.getName(), margin);
+            float price = product.getPrice();
+            float supplyPrice = product.getSupplyPrice();
+            int quantity = line.getQuantity();
+
+            float margin = Math.round((price - supplyPrice) * quantity);
+            productMarginDAO.incrementProductMargin(reference, name, margin);
         }
 
         return orderId;
