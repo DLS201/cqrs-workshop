@@ -14,6 +14,12 @@ public class ProductDAOImpl implements ProductDAO {
     JdbcTemplate jdbcTemplate;
 
     private final String SQL_FIND_BY_REF = "select * from product where reference = ?";
+    private final String SQL_BEST_SALES = "SELECT product.name as product_name, \n" +
+            "SUM((price - supply_price) * quantity) AS product_margin\n" +
+            "FROM product JOIN order_line ON product.reference = order_line.reference\n" +
+            "GROUP BY product.name\n" +
+            "ORDER BY product_margin DESC\n" +
+            "LIMIT 3";
 
     @Autowired
     public ProductDAOImpl(DataSource dataSource) {
@@ -23,13 +29,13 @@ public class ProductDAOImpl implements ProductDAO {
     public Product getByReference(Long reference) {
         return jdbcTemplate.queryForObject(
                 "select * " +
-                "from product " +
-                "where reference = ?",
+                        "from product " +
+                        "where reference = ?",
                 new Object[] { reference }, new ProductMapper());
     }
 
     @Override
     public BestSales getBestSales() {
-        throw new RuntimeException("implement me to complete workshop1 !");
+        return jdbcTemplate.queryForObject(SQL_BEST_SALES, new BestSalesMapper());
     }
 }
