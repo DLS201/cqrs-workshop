@@ -30,4 +30,8 @@ CREATE TABLE product_margin
     total_margin      FLOAT CHECK (total_margin >= 0)
 );
 
-
+CREATE TABLE product_inventory
+(
+    product_reference INTEGER PRIMARY KEY,
+    quantity      INTEGER CHECK (quantity >= 0)
+);

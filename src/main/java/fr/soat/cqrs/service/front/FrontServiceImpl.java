@@ -11,10 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class FrontServiceImpl implements FrontService {
 
+    private final ProductInventoryDAO productInventoryDAO;
     private final OrderDAO orderDAO;
 
     @Autowired
-    public FrontServiceImpl(OrderDAO orderDAO) {
+    public FrontServiceImpl(ProductInventoryDAO productInventoryDAO, OrderDAO orderDAO) {
+        this.productInventoryDAO = productInventoryDAO;
         this.orderDAO = orderDAO;
     }
 
@@ -25,7 +27,9 @@ public class FrontServiceImpl implements FrontService {
         Long orderId = orderDAO.insert(order);
 
         // update inventory
-        //FIXME: for each order line, decrease the stock in product_inventory of the ordered quantity (ProductInventoryDAO.decreaseProductInventory())
+        for (OrderLine line : order.getLines()) {
+            productInventoryDAO.decreaseProductInventory(line.getProductReference(), line.getQuantity());
+        }
 
         return orderId;
     }
