@@ -61,6 +61,8 @@ public class ProductMarginUpdater {
         // 0. check event not already processed
         Struct rowBefore = (Struct) ((Struct) record.value()).get("before");
         //FIXME check if event is consumed for the first time !
+        String hash = hash("del", rowBefore, null);
+        eventDAO.insert(hash);
 
         // 1. compute margin for order line
         long reference = Long.valueOf((int)rowBefore.get("reference"));
@@ -77,6 +79,8 @@ public class ProductMarginUpdater {
         // 0. check event not already processed
         Struct rowAfter = (Struct) ((Struct) record.value()).get("after");
         //FIXME check if event is consumed for the first time !
+        String hash = hash("ins", null, rowAfter);
+        eventDAO.insert(hash);
 
         // 1. compute margin for order line
         long reference = Long.valueOf((int)rowAfter.get("reference"));
@@ -89,4 +93,9 @@ public class ProductMarginUpdater {
         log.info("(+) increasing margin on {} of {}", product.getName(), productMargin);
     }
 
+    private String hash(String operation, Struct rowBefore, Struct rowAfter) {
+        return operation + "-" +
+                rowBefore + "-" +
+                rowAfter;
+    }
 }

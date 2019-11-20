@@ -33,3 +33,8 @@ CREATE TABLE product_margin
     total_margin      FLOAT CHECK (total_margin >= 0)
 );
 ALTER TABLE product_margin REPLICA IDENTITY FULL;
+
+CREATE TABLE consumed_event
+(
+    hash TEXT PRIMARY KEY
+);
