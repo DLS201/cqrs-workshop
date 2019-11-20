@@ -18,7 +18,7 @@ public class OrderJsonMapperTest {
                 one(TSHIRT_BOB_LEPONGE),
                 two(ROBE_REINE_DES_NEIGES)
         );
-        Order serdesOrder = OrderJsonMapper.fromJson(OrderJsonMapper.toJason(order));
+        Order serdesOrder = OrderJsonMapper.fromJson(OrderJsonMapper.toJson(order));
 
         assertEquals(serdesOrder, order);
     }

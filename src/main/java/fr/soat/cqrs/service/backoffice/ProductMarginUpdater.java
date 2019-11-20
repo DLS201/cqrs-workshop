@@ -4,13 +4,17 @@ import fr.soat.cqrs.dao.OrderEventDAO;
 import fr.soat.cqrs.dao.ProductDAO;
 import fr.soat.cqrs.dao.ProductMarginDAO;
 import fr.soat.cqrs.event.OrderDeletedEvent;
+import fr.soat.cqrs.event.OrderEvent;
 import fr.soat.cqrs.event.OrderSavedEvent;
 import fr.soat.cqrs.model.Order;
 import fr.soat.cqrs.model.OrderLine;
 import fr.soat.cqrs.model.Product;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
@@ -41,12 +45,24 @@ public class ProductMarginUpdater {
         log.info(this.getClass().getSimpleName() + " is enabled (start consuming events)");
     }
 
-    //FIXME make me execute every 100ms !
+    @Transactional
+    @Scheduled(fixedDelay = 100)
     public void consumePendingOrderEvents() {
         if (enabled.get()) {
             log.info(this.getClass().getSimpleName() + " is polling for pending events...");
-            // FIXME poll pending events and consume them until there is no more pending events !
-            throw new RuntimeException("implement me !");
+
+            Optional<OrderEvent> maybeOrder = orderEventDAO.pop();
+
+            if (maybeOrder.isPresent()) {
+                OrderEvent order = maybeOrder.get();
+
+                if (order instanceof OrderSavedEvent) {
+                    onOrderSavedEvent(((OrderSavedEvent) order));
+                }
+                else {
+                    onOrderDeletedEvent(((OrderDeletedEvent) order));
+                }
+            }
         }
     }
 

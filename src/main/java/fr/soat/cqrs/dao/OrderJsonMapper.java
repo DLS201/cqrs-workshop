@@ -10,7 +10,7 @@ public class OrderJsonMapper {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public static String toJason(Order order) {
+    public static String toJson(Order order) {
         try {
             return objectMapper.writeValueAsString(order);
         } catch (JsonProcessingException e) {
