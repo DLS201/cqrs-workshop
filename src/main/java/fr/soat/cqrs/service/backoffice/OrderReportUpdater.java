@@ -9,6 +9,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Date;
 
 @Slf4j
 @Service
@@ -25,8 +26,8 @@ public class OrderReportUpdater {
     }
 
     public void start() {
-        //FIXME start a listener for table order_line, using callback onOrderLineRecord()
-        throw new RuntimeException("implement me !");
+        databaseChangeEventListener.startListener("public.order_line", this::onOrderLineRecord);
+        log.info(this.getClass().getSimpleName() + " is started (start consuming events)");
     }
 
     public void stop() {
@@ -42,7 +43,35 @@ public class OrderReportUpdater {
             // 2. get the product *reference* from the record
             // 3. load the product by *reference* using `ProductDAO`
             // 4. upsert a row in `order_report` with product reference, name, price, and current Date (Use [OrderReportDAO#upsert()](src/main/java/fr/soat/cqrs/dao/OrderReportDAO.java#L7))
-            throw new RuntimeException("implement me !");
+            Struct recordValue = (Struct) orderLineRecord.value();
+            if (recordValue != null) {
+                String op = recordValue.getString("op");
+                if ("r".equals(op)) {
+                    // snapshot
+                    Object record_after = ((Struct) orderLineRecord.value()).get("after");
+                    Long product_reference = Long.valueOf(((Struct) record_after).getInt32("reference"));
+
+                    Product product = productDAO.getByReference(product_reference);
+                    orderReportDAO.upsert(
+                            product.getReference(),
+                            product.getName(),
+                            product.getPrice(),
+                            LocalDate.now());
+                } else if ("c".equals(op)) {
+                    //insert
+                    Object record_after = ((Struct) orderLineRecord.value()).get("after");
+                    Long product_reference = Long.valueOf(((Struct) record_after).getInt32("reference"));
+
+                    Product product = productDAO.getByReference(product_reference);
+                    orderReportDAO.upsert(
+                            product.getReference(),
+                            product.getName(),
+                            product.getPrice(),
+                            LocalDate.now());
+                } else {
+                    log.warn("Received unsupported record: {}", orderLineRecord);
+                }
+            }
         } catch (Exception e) {
             log.error("Failed to consume SourceRecord", e);
         }
