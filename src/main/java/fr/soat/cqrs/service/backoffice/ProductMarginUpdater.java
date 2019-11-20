@@ -44,7 +44,7 @@ public class ProductMarginUpdater {
             Struct recordValue = (Struct) record.value();
             if (recordValue != null) {
                 String op = recordValue.getString("op");
-                if ("c".equals(op) || "r".equals(op) ) {
+                if ("c".equals(op) || "r".equals(op)) {
                     onCreateOrderLine(record);
                 } else if ("d".equals(op)) { // delete
                     onDeleteOrderLine(record);
@@ -60,11 +60,11 @@ public class ProductMarginUpdater {
     private void onDeleteOrderLine(SourceRecord record) {
         // 1. compute margin for order line
         Struct row = (Struct) ((Struct) record.value()).get("before");
-        long reference = Long.valueOf((int)row.get("reference"));
+        long reference = Long.valueOf((int) row.get("reference"));
         int quantity = (int) row.get("quantity");
         Product product = productDAO.getByReference(reference);
         //FIXME compute product total margin
-        float productMargin = 0f;
+        float productMargin = getProductMargin(product, quantity);
 
         // 2. update product_margin
         productMarginDAO.decrementProductMargin(reference, product.getName(), productMargin);
@@ -74,15 +74,18 @@ public class ProductMarginUpdater {
     private void onCreateOrderLine(SourceRecord record) {
         // 1. compute margin for order line
         Struct row = (Struct) ((Struct) record.value()).get("after");
-        long reference = Long.valueOf((int)row.get("reference"));
+        long reference = Long.valueOf((int) row.get("reference"));
         int quantity = (int) row.get("quantity");
         Product product = productDAO.getByReference(reference);
         //FIXME compute product total margin
-        float productMargin = 0f;
+        float productMargin = getProductMargin(product, quantity);
 
         // 2. update product_margin
         productMarginDAO.incrementProductMargin(reference, product.getName(), productMargin);
         log.info("(+) increasing margin on {} of {}", product.getName(), productMargin);
     }
 
+    private float getProductMargin(Product product, int quantity) {
+        return Math.round((product.getPrice() - product.getSupplyPrice()) * quantity);
+    }
 }
