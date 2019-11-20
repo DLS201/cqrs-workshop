@@ -2,6 +2,7 @@ package fr.soat.cqrs.service.backoffice;
 
 import fr.soat.cqrs.dao.ProductDAO;
 import fr.soat.cqrs.dao.ProductMarginDAO;
+import fr.soat.cqrs.event.OrderDeletedEvent;
 import fr.soat.cqrs.event.OrderSavedEvent;
 import fr.soat.cqrs.model.Order;
 import fr.soat.cqrs.model.OrderLine;
@@ -26,7 +27,7 @@ public class ProductMarginUpdater {
         this.productMarginDAO = productMarginDAO;
     }
 
-    @Async
+    @Async("productMarginUpdaterThreadPool")
     @Transactional
     @TransactionalEventListener(phase = AFTER_COMMIT)
     public void onOrderSavedEvent(OrderSavedEvent orderSavedEvent) {
@@ -45,4 +46,22 @@ public class ProductMarginUpdater {
         }
     }
 
+    @Async("productMarginUpdaterThreadPool")
+    @Transactional
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    public void onOrderDeletedEvent(OrderDeletedEvent orderDeletedEvent) {
+        log.info("Received " + orderDeletedEvent);
+        Order order  = orderDeletedEvent.getOrder();
+
+        for (OrderLine orderLine : order.getLines()) {
+            // 2. for each product, compute the margin to add
+            Long productReference = orderLine.getProductReference();
+            int quantity = orderLine.getQuantity();
+            Product product = productDAO.getByReference(productReference);
+            float productMargin = Math.round((product.getPrice() - product.getSupplyPrice()) * quantity);
+
+            // 3. update total_margin in product_margin table
+            productMarginDAO.decrementProductMargin(productReference, product.getName(), productMargin);
+        }
+    }
 }

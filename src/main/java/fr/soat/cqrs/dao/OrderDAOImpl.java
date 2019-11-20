@@ -1,5 +1,6 @@
 package fr.soat.cqrs.dao;
 
+import fr.soat.cqrs.event.OrderDeletedEvent;
 import fr.soat.cqrs.event.OrderSavedEvent;
 import fr.soat.cqrs.model.Order;
 import fr.soat.cqrs.model.OrderLine;
@@ -78,13 +79,16 @@ public class OrderDAOImpl implements OrderDAO {
 
     @Override
     public void delete(Long orderId) {
-        //FIXME
-        // delete order from order_line
-        // delete order from product_order
-        
+        Order order = getById(orderId);
+
+        String sql = "DELETE FROM order_line WHERE order_id = ?";
+        jdbcTemplate.update(sql, orderId);
+
+        sql = "DELETE FROM product_order WHERE id = ?";
+        jdbcTemplate.update(sql, orderId);
+
         // publish an OrderDeletedEvent
         // hint: reload the order from DB to wrap it into the event
-
-        throw new RuntimeException("implement me !");
+        eventPublisher.publishEvent(new OrderDeletedEvent(order));
     }
 }

@@ -47,12 +47,19 @@ public class ProductMarginDAOImpl implements ProductMarginDAO {
 
     @Override
     public void decrementProductMargin(Long productReference, String productName, float marginToRemove) {
-        //FIXME
-        // update product_margin to decrease the margin on the product
-        // nota: don't forget the error cases:
-        // 1) the case where there is no row in product_margin for the product reference: throw new ProductMarginException("No total margin for product " + productReference);
-        // 2) the case where the margin becomes negative after the cancel: throw new ProductMarginException("Negative total margin for product " + productReference);
-        throw new RuntimeException("implement me !");
+        String upsertSQL = "UPDATE product_margin SET total_margin = product_margin.total_margin - ? WHERE product_reference = ?";
+        int update = 0;
+        try {
+            update = jdbcTemplate.update(upsertSQL, marginToRemove, productReference);
+        } catch (DataIntegrityViolationException e) {
+            if (e.getMessage().contains("product_margin_total_margin_check"))  {
+                throw new ProductMarginException("Negative total margin for product " + productReference);
+            }
+        }
+
+        if (update == 0) {
+            throw new ProductMarginException("No total margin for product " + productReference);
+        }
     }
 }
 

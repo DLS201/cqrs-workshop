@@ -48,4 +48,8 @@ public class AppConfig {
         return new DataSourceTransactionManager(datasource);
     }
 
+    @Bean
+    public Executor productMarginUpdaterThreadPool() {
+        return Executors.newFixedThreadPool(1, task -> new Thread(task, "product-margin-updater-thread"));
+    }
 }
